@@ -1,9 +1,16 @@
 import 'package:app_agenda_de_mascotas/models/pet_activity.dart';
-import 'package:app_agenda_de_mascotas/utils/date_formatter.dart';
 import 'package:flutter/material.dart';
+import 'package:app_agenda_de_mascotas/utils/date_formatter.dart';
 
 class ActivityFormScreen extends StatefulWidget {
-  const ActivityFormScreen({super.key});
+  final String petId;
+  final Function(PetActivity) onActivityAdded;
+
+  const ActivityFormScreen({
+    super.key,
+    required this.petId,
+    required this.onActivityAdded,
+  });
 
   @override
   State<ActivityFormScreen> createState() => _ActivityFormScreenState();
@@ -22,6 +29,8 @@ class _ActivityFormScreenState extends State<ActivityFormScreen> {
     'Paseo',
     'Veterinario',
     'Medicación',
+    'Corte de uñas',
+    'Cepillado',
   ];
 
   Future<void> _selectDate(BuildContext context) async {
@@ -41,14 +50,17 @@ class _ActivityFormScreenState extends State<ActivityFormScreen> {
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
-      Navigator.pop(
-        context,
-        PetActivity(
-          type: _selectedType,
-          date: _selectedDate,
-          comment: _commentController.text,
-        ),
+      final newActivity = PetActivity(
+        id: DateTime.now().toString(),
+        petId: widget.petId,
+        type: _selectedType,
+        date: _selectedDate,
+        comment: _commentController.text,
+        completed: false, // or true, depending on your logic
       );
+
+      widget.onActivityAdded(newActivity);
+      Navigator.pop(context);
     }
   }
 
@@ -63,7 +75,6 @@ class _ActivityFormScreenState extends State<ActivityFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Tipo de actividad
               DropdownButtonFormField<String>(
                 value: _selectedType,
                 decoration: const InputDecoration(
@@ -85,7 +96,6 @@ class _ActivityFormScreenState extends State<ActivityFormScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Fecha
               TextFormField(
                 readOnly: true,
                 decoration: const InputDecoration(
@@ -99,7 +109,6 @@ class _ActivityFormScreenState extends State<ActivityFormScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Comentario
               TextFormField(
                 controller: _commentController,
                 decoration: const InputDecoration(
@@ -110,7 +119,6 @@ class _ActivityFormScreenState extends State<ActivityFormScreen> {
               ),
               const SizedBox(height: 30),
 
-              // Botón para agregar
               ElevatedButton(
                 onPressed: _submitForm,
                 child: const Text('Agregar Actividad'),

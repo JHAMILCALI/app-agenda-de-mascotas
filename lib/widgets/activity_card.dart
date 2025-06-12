@@ -1,11 +1,16 @@
-import 'package:app_agenda_de_mascotas/models/pet_activity.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:app_agenda_de_mascotas/models/pet_activity.dart';
 
 class ActivityCard extends StatelessWidget {
   final PetActivity activity;
+  final Function(String) onToggleCompletion;
 
-  const ActivityCard({super.key, required this.activity});
+  const ActivityCard({
+    super.key,
+    required this.activity,
+    required this.onToggleCompletion,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,27 +26,49 @@ class ActivityCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Icono
-                _getActivityIcon(context, activity.type),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    activity.type,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                Text(
+                  activity.type,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
+                IconButton(
+                  icon: Icon(
+                    activity.completed
+                        ? Icons.check_circle
+                        : Icons.radio_button_unchecked,
+                    color: activity.completed ? Colors.green : Colors.grey,
+                  ),
+                  onPressed: () => onToggleCompletion(activity.id),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
                 Text(
-                  DateFormat('dd/MM/yy').format(activity.date),
-                  style: const TextStyle(color: Colors.grey),
+                  _formatDate(activity.date),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ],
             ),
             if (activity.comment.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(activity.comment, style: const TextStyle(fontSize: 14)),
+              Row(
+                children: [
+                  const Icon(Icons.comment, size: 16, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      activity.comment,
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ],
         ),
@@ -49,40 +76,13 @@ class ActivityCard extends StatelessWidget {
     );
   }
 
-  Widget _getActivityIcon(BuildContext context, String type) {
-    IconData icon;
-    Color color = Theme.of(context).colorScheme.primary;
+  String _formatDate(DateTime date) {
+    final today = DateTime.now();
+    final difference = date.difference(today).inDays;
 
-    switch (type) {
-      case 'Alimentación':
-        icon = Icons.restaurant;
-        break;
-      case 'Baño':
-        icon = Icons.shower;
-        break;
-      case 'Vacunas':
-        icon = Icons.medical_services;
-        break;
-      case 'Paseo':
-        icon = Icons.directions_walk;
-        break;
-      case 'Veterinario':
-        icon = Icons.local_hospital;
-        break;
-      case 'Medicación':
-        icon = Icons.medication;
-        break;
-      default:
-        icon = Icons.pets;
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(icon, color: color, size: 24),
-    );
+    if (difference == 0) return 'Hoy';
+    if (difference == 1) return 'Mañana';
+    if (difference == -1) return 'Ayer';
+    return DateFormat('EEE, dd/MM').format(date);
   }
 }

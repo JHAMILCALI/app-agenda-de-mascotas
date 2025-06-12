@@ -12,7 +12,10 @@ class ActivityList extends StatelessWidget {
     return ListView.builder(
       itemCount: activities.length,
       itemBuilder: (context, index) {
-        return ActivityCard(activity: activities[index]);
+        return ActivityCard(
+          activity: activities[index],
+          onToggleCompletion: (String) {},
+        );
       },
     );
   }
