@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:app_agenda_de_mascotas/models/pet.dart';
 import 'package:app_agenda_de_mascotas/models/pet_activity.dart';
+import 'package:app_agenda_de_mascotas/providers/app_state.dart';
 import 'package:app_agenda_de_mascotas/screens/pets_screen.dart';
 import 'package:app_agenda_de_mascotas/widgets/upcoming_activity_card.dart';
 import 'package:app_agenda_de_mascotas/widgets/progress_chip.dart';
@@ -14,61 +16,32 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  List<Pet> pets = [];
-  List<PetActivity> activities = [];
-  int completedCount = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    // Datos de ejemplo
-    pets = [
-      Pet(id: '1', name: 'Firulais', type: 'Perro', color: '#FFA857'),
-      Pet(id: '2', name: 'Michi', type: 'Gato', color: '#6DC0D5'),
-    ];
-
-    activities = [
-      PetActivity(
-        id: '1',
-        petId: '1',
-        type: 'Vacunas',
-        date: DateTime.now().add(const Duration(days: 2)),
-        comment: 'Vacuna antirrábica',
-      ),
-      PetActivity(
-        id: '2',
-        petId: '2',
-        type: 'Baño',
-        date: DateTime.now().add(const Duration(days: 1)),
-        comment: 'Baño con shampoo especial',
-      ),
-      PetActivity(
-        id: '3',
-        petId: '1',
-        type: 'Paseo',
-        date: DateTime.now(),
-        comment: 'Paseo por el parque',
-      ),
-    ];
-
-    completedCount = 1;
-  }
-
-  void _toggleActivityCompletion(String id) {
-    setState(() {
-      final activity = activities.firstWhere((a) => a.id == id);
-      activity.completed = !activity.completed;
-      completedCount = activities.where((a) => a.completed).length;
-    });
+  void _toggleActivityCompletion(String petId, String activityId) {
+    final appState = Provider.of<AppState>(context, listen: false);
+    appState.toggleActivityCompletion(petId, activityId);
   }
 
   @override
   Widget build(BuildContext context) {
-    // Ordenar actividades por fecha (más próximas primero)
+    final appState = Provider.of<AppState>(context);
+    final pets = appState.pets;
+
+    // 🔧 Recolectar todas las actividades desde las mascotas
+    final activities = pets.expand((pet) => pet.activities).toList();
+
+    // Ordenar las actividades no completadas por fecha (de hoy en adelante)
+    final now = DateTime.now();
     final upcomingActivities =
-        activities.where((a) => !a.completed).toList()
+        activities
+            .where(
+              (a) =>
+                  !a.completed &&
+                  !a.date.isBefore(DateTime(now.year, now.month, now.day)),
+            )
+            .toList()
           ..sort((a, b) => a.date.compareTo(b.date));
 
+    final completedCount = activities.where((a) => a.completed).length;
     final progress =
         activities.isNotEmpty ? completedCount / activities.length : 0.0;
 
@@ -78,11 +51,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.pets),
-            onPressed:
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const PetsScreen()),
-                ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PetsScreen()),
+              );
+            },
           ),
         ],
       ),
@@ -140,7 +114,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 20),
 
-            // Próximas actividades
+            // Título de sección
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -153,6 +127,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 10),
 
+            // Lista o estado vacío
             if (upcomingActivities.isEmpty)
               const EmptyState(
                 icon: Icons.event_available,
@@ -164,7 +139,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   itemCount: upcomingActivities.length,
                   itemBuilder: (context, index) {
                     final activity = upcomingActivities[index];
-                    final pet = pets.firstWhere((p) => p.id == activity.petId);
+                    final pet = pets.firstWhere(
+                      (p) => p.id == activity.petId,
+                      orElse:
+                          () => Pet(
+                            id: '0',
+                            name: 'Desconocido',
+                            type: '',
+                            color: '#CCCCCC',
+                          ),
+                    );
                     return UpcomingActivityCard(
                       activity: activity,
                       pet: pet,
@@ -177,7 +161,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PetsScreen()),
+          );
+        },
         backgroundColor: Theme.of(context).colorScheme.secondary,
         child: const Icon(Icons.add, color: Colors.white),
       ),

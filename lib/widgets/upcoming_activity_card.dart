@@ -1,13 +1,12 @@
 import 'package:app_agenda_de_mascotas/models/pet.dart';
 import 'package:app_agenda_de_mascotas/models/pet_activity.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:app_agenda_de_mascotas/utils/date_formatter.dart';
 
 class UpcomingActivityCard extends StatelessWidget {
   final PetActivity activity;
   final Pet pet;
-  final Function(String) onToggleCompletion;
+  final void Function(String petId, String activityId) onToggleCompletion;
 
   const UpcomingActivityCard({
     super.key,
@@ -25,6 +24,7 @@ class UpcomingActivityCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Pet Info + Date
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -35,7 +35,7 @@ class UpcomingActivityCard extends StatelessWidget {
                         int.parse(pet.color.replaceFirst('#', '0xFF')),
                       ),
                       child: Text(
-                        pet.name[0],
+                        pet.name[0].toUpperCase(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -54,9 +54,7 @@ class UpcomingActivityCard extends StatelessWidget {
                   ],
                 ),
                 Text(
-                  DateFormatter.formatDate(
-                    activity.date,
-                  ), // ← Usamos el nuevo método
+                  DateFormatter.formatDate(activity.date),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
@@ -64,10 +62,14 @@ class UpcomingActivityCard extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 12),
+
+            // Activity Info + Toggle
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Activity type and optional comment
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -91,6 +93,8 @@ class UpcomingActivityCard extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                // Completion toggle button
                 IconButton(
                   icon: Icon(
                     activity.completed
@@ -101,7 +105,7 @@ class UpcomingActivityCard extends StatelessWidget {
                             ? Colors.green
                             : Theme.of(context).colorScheme.primary,
                   ),
-                  onPressed: () => onToggleCompletion(activity.id),
+                  onPressed: () => onToggleCompletion(pet.id, activity.id),
                 ),
               ],
             ),
