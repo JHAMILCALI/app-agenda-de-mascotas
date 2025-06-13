@@ -1,39 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:app_agenda_de_mascotas/models/pet.dart';
+import 'package:app_agenda_de_mascotas/providers/app_state.dart';
 import 'package:app_agenda_de_mascotas/screens/add_pet_screen.dart';
 import 'package:app_agenda_de_mascotas/screens/pet_detail_screen.dart';
 import 'package:app_agenda_de_mascotas/widgets/pet_card.dart';
 import 'package:app_agenda_de_mascotas/widgets/empty_state.dart';
 
-class PetsScreen extends StatefulWidget {
+class PetsScreen extends StatelessWidget {
   const PetsScreen({super.key});
 
   @override
-  State<PetsScreen> createState() => _PetsScreenState();
-}
-
-class _PetsScreenState extends State<PetsScreen> {
-  List<Pet> pets = [];
-
-  @override
-  void initState() {
-    super.initState();
-    // Datos de ejemplo
-    pets = [
-      Pet(id: '1', name: 'Firulais', type: 'Perro', color: '#FFA857'),
-      Pet(id: '2', name: 'Michi', type: 'Gato', color: '#6DC0D5'),
-      Pet(id: '3', name: 'Lola', type: 'Conejo', color: '#A78BFA'),
-    ];
-  }
-
-  void _addPet(Pet newPet) {
-    setState(() {
-      pets.add(newPet);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final petProvider = Provider.of<AppState>(context);
+    final pets = petProvider.pets;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Mis Mascotas')),
       body: Padding(
@@ -53,15 +34,14 @@ class _PetsScreenState extends State<PetsScreen> {
                   ),
                   itemCount: pets.length,
                   itemBuilder: (context, index) {
+                    final pet = pets[index];
                     return PetCard(
-                      pet: pets[index],
+                      pet: pet,
                       onTap:
                           () => Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (context) =>
-                                      PetDetailScreen(pet: pets[index]),
+                              builder: (context) => PetDetailScreen(pet: pet),
                             ),
                           ),
                     );
@@ -70,20 +50,20 @@ class _PetsScreenState extends State<PetsScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
+          // ← Mostrar AddPetScreen y esperar resultado
           final newPet = await Navigator.push<Pet>(
             context,
-            MaterialPageRoute(
-              builder:
-                  (context) => AddPetScreen(
-                    onPetAdded: (Pet) {},
-                  ), // ya no pasas onPetAdded
-            ),
+            MaterialPageRoute(builder: (context) => const AddPetScreen()),
           );
 
           if (newPet != null) {
-            _addPet(newPet);
+            Provider.of<AppState>(
+              context,
+              listen: false,
+            ).addPet(newPet.name, newPet.type, newPet.color);
           }
         },
+
         child: const Icon(Icons.add),
       ),
     );

@@ -1,6 +1,8 @@
 import 'package:app_agenda_de_mascotas/models/pet.dart';
 import 'package:app_agenda_de_mascotas/models/pet_activity.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:app_agenda_de_mascotas/utils/date_formatter.dart';
 
 class UpcomingActivityCard extends StatelessWidget {
   final PetActivity activity;
@@ -52,7 +54,9 @@ class UpcomingActivityCard extends StatelessWidget {
                   ],
                 ),
                 Text(
-                  activity.formattedDate(context), // ← Usamos el nuevo método
+                  DateFormatter.formatDate(
+                    activity.date,
+                  ), // ← Usamos el nuevo método
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
